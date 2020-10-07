@@ -47,9 +47,36 @@ class MyExt {
     @javax.inject.Inject
     MyExt(ObjectFactory objectFactory) {
         extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec )
-        extensionSpecContainer.registerFactory( ExtensionSpec, { objectFactory.newInstance(ExtensionSpec, it) } )
-        extensionSpecContainer.registerFactory( ExtensionSpecOne, { objectFactory.newInstance(ExtensionSpecOne, it) } )
-        extensionSpecContainer.registerFactory( ExtensionSpecTwo, { objectFactory.newInstance(ExtensionSpecTwo, it) } )
+//        extensionSpecContainer.registerFactory( ExtensionSpec, { objectFactory.newInstance(ExtensionSpec, it) } )
+//        extensionSpecContainer.registerFactory( ExtensionSpecOne, { objectFactory.newInstance(ExtensionSpecOne, it) } )
+//        extensionSpecContainer.registerFactory( ExtensionSpecTwo, { objectFactory.newInstance(ExtensionSpecTwo, it) } )
+        extensionSpecContainer.registerFactory(
+                ExtensionSpec,
+                new NamedDomainObjectFactory() {
+                    @Override
+                    ExtensionSpec create(String name) {
+                        return objectFactory.newInstance(ExtensionSpec, name)
+                    }
+                }
+        )
+        extensionSpecContainer.registerFactory(
+                ExtensionSpecOne,
+                new NamedDomainObjectFactory() {
+                    @Override
+                    ExtensionSpecOne create(String name) {
+                        return objectFactory.newInstance(ExtensionSpecOne, name)
+                    }
+                }
+        )
+        extensionSpecContainer.registerFactory(
+                ExtensionSpecTwo,
+                new NamedDomainObjectFactory() {
+                    @Override
+                    ExtensionSpecTwo create(String name) {
+                        return objectFactory.newInstance(ExtensionSpecTwo, name)
+                    }
+                }
+        )
     }
 
     void extensionSpecs(Action<PolymorphicDomainObjectContainer<ExtensionSpec>> action) {
