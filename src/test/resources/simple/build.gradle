@@ -1,32 +1,10 @@
-plugins {
-    id 'java'
-    id 'groovy'
-    id 'java-gradle-plugin'
 
-    id 'com.gradle.plugin-publish' version '0.12.0'
-
-    // for publishing snapshots
-    id 'maven-publish'
-    id 'org.hibernate.build.maven-repo-auth' version '3.0.4'
-}
-
-group 'com.github.sebersole'
-version '0.1-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compile 'org.codehaus.groovy:groovy-all:2.3.11'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-}
 
 abstract class ExtensionSpec implements Named {
     private final String name
     abstract Property<String> getZero()
-   @javax.inject.Inject
-   ExtensionSpec(String name) {
+    @javax.inject.Inject
+    ExtensionSpec(String name) {
         this.name = name
     }
     @Override
