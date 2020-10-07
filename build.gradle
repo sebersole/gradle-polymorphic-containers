@@ -15,11 +15,11 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-abstract class MyNamed implements Named {
+abstract class ExtensionSpec implements Named {
     private final String name
     abstract Property<String> getZero()
    @javax.inject.Inject
-    MyNamed(String name) {
+   ExtensionSpec(String name) {
         this.name = name
     }
     @Override
@@ -27,52 +27,52 @@ abstract class MyNamed implements Named {
         return name
     }
 }
-abstract class MyNamedOne extends MyNamed {
+abstract class ExtensionSpecOne extends ExtensionSpec {
     abstract Property<String> getOne()
     @javax.inject.Inject
-    MyNamedOne(String name) {
+    ExtensionSpecOne(String name) {
         super(name)
     }
 }
-abstract class MyNamedTwo extends MyNamed {
+abstract class ExtensionSpecTwo extends ExtensionSpec {
     @javax.inject.Inject
-    MyNamedTwo(String name) {
+    ExtensionSpecTwo(String name) {
         super(name)
     }
 }
 
 class MyExt {
-    private final ExtensiblePolymorphicDomainObjectContainer<MyNamed> elementContainer
+    private final ExtensiblePolymorphicDomainObjectContainer<ExtensionSpec> extensionSpecContainer
 
     @javax.inject.Inject
     MyExt(ObjectFactory objectFactory) {
-        elementContainer = objectFactory.polymorphicDomainObjectContainer( MyNamed )
-        elementContainer.registerFactory( MyNamed, { objectFactory.newInstance(MyNamed, it) } )
-        elementContainer.registerFactory( MyNamedOne, { objectFactory.newInstance(MyNamedOne, it) } )
-        elementContainer.registerFactory( MyNamedTwo, { objectFactory.newInstance(MyNamedTwo, it) } )
+        extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec )
+        extensionSpecContainer.registerFactory( ExtensionSpec, { objectFactory.newInstance(ExtensionSpec, it) } )
+        extensionSpecContainer.registerFactory( ExtensionSpecOne, { objectFactory.newInstance(ExtensionSpecOne, it) } )
+        extensionSpecContainer.registerFactory( ExtensionSpecTwo, { objectFactory.newInstance(ExtensionSpecTwo, it) } )
     }
 
-    void elements(Action<PolymorphicDomainObjectContainer<MyNamed>> action) {
-        action.execute( elementContainer );
+    void extensionSpecs(Action<PolymorphicDomainObjectContainer<ExtensionSpec>> action) {
+        action.execute( extensionSpecContainer );
     }
 
-    PolymorphicDomainObjectContainer<MyNamed> getElements() {
-        return elementContainer
+    PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecs() {
+        return extensionSpecContainer
     }
 }
 
 extensions.create( 'myExt', MyExt )
 
 myExt {
-    elements {
-        a(MyNamedOne) {
+    extensionSpecs {
+        a(ExtensionSpecOne) {
             zero = 'hello'
             one = 'world'
         }
-        b(MyNamedTwo) {
+        b(ExtensionSpecTwo) {
             zero = 'or not'
         }
-        c(MyNamedOne) {
+        c(ExtensionSpecOne) {
             zero = 'bye'
             one = 'for now'
         }
@@ -85,13 +85,13 @@ myExt {
 
 task qwe {
     doLast {
-        myExt.elements.withType( MyNamed ) {
+        myExt.extensionSpecs.withType( ExtensionSpec ) {
             println "${it.name}: ${it.zero.get()}"
         }
-        myExt.elements.withType( MyNamedOne ) {
+        myExt.extensionSpecs.withType( ExtensionSpecOne ) {
             println "[One] ${it.name}: ${it.zero.get()} ${it.one.get()}"
         }
-        myExt.elements.withType( MyNamedTwo ) {
+        myExt.extensionSpecs.withType( ExtensionSpecTwo ) {
             println "[Two] ${it.name} ${it.zero.get()}"
         }
     }
