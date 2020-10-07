@@ -41,11 +41,11 @@ abstract class ExtensionSpecTwo extends ExtensionSpec {
     }
 }
 
-class MyExt {
+class QuarkusSpec {
     private final ExtensiblePolymorphicDomainObjectContainer<ExtensionSpec> extensionSpecContainer
 
     @javax.inject.Inject
-    MyExt(ObjectFactory objectFactory) {
+    QuarkusSpec(ObjectFactory objectFactory) {
         extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec )
 //        extensionSpecContainer.registerFactory( ExtensionSpec, { objectFactory.newInstance(ExtensionSpec, it) } )
 //        extensionSpecContainer.registerFactory( ExtensionSpecOne, { objectFactory.newInstance(ExtensionSpecOne, it) } )
@@ -88,9 +88,9 @@ class MyExt {
     }
 }
 
-extensions.create( 'myExt', MyExt )
+extensions.create( 'quarkus', QuarkusSpec )
 
-myExt {
+quarkus {
     extensionSpecs {
         a(ExtensionSpecOne) {
             zero = 'hello'
@@ -112,13 +112,13 @@ myExt {
 
 task qwe {
     doLast {
-        myExt.extensionSpecs.withType( ExtensionSpec ) {
+        quarkus.extensionSpecs.withType( ExtensionSpec ) {
             println "${it.name}: ${it.zero.get()}"
         }
-        myExt.extensionSpecs.withType( ExtensionSpecOne ) {
+        quarkus.extensionSpecs.withType( ExtensionSpecOne ) {
             println "[One] ${it.name}: ${it.zero.get()} ${it.one.get()}"
         }
-        myExt.extensionSpecs.withType( ExtensionSpecTwo ) {
+        quarkus.extensionSpecs.withType( ExtensionSpecTwo ) {
             println "[Two] ${it.name} ${it.zero.get()}"
         }
     }
