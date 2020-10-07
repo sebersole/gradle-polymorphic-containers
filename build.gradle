@@ -1,0 +1,98 @@
+plugins {
+    id 'groovy'
+    id 'java'
+}
+
+group 'com.github.sebersole'
+version '0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+abstract class MyNamed implements Named {
+    private final String name
+    abstract Property<String> getZero()
+   @javax.inject.Inject
+    MyNamed(String name) {
+        this.name = name
+    }
+    @Override
+    String getName() {
+        return name
+    }
+}
+abstract class MyNamedOne extends MyNamed {
+    abstract Property<String> getOne()
+    @javax.inject.Inject
+    MyNamedOne(String name) {
+        super(name)
+    }
+}
+abstract class MyNamedTwo extends MyNamed {
+    @javax.inject.Inject
+    MyNamedTwo(String name) {
+        super(name)
+    }
+}
+
+class MyExt {
+    private final ExtensiblePolymorphicDomainObjectContainer<MyNamed> elementContainer
+
+    @javax.inject.Inject
+    MyExt(ObjectFactory objectFactory) {
+        elementContainer = objectFactory.polymorphicDomainObjectContainer( MyNamed )
+        elementContainer.registerFactory( MyNamed, { objectFactory.newInstance(MyNamed, it) } )
+        elementContainer.registerFactory( MyNamedOne, { objectFactory.newInstance(MyNamedOne, it) } )
+        elementContainer.registerFactory( MyNamedTwo, { objectFactory.newInstance(MyNamedTwo, it) } )
+    }
+
+    void elements(Action<PolymorphicDomainObjectContainer<MyNamed>> action) {
+        action.execute( elementContainer );
+    }
+
+    PolymorphicDomainObjectContainer<MyNamed> getElements() {
+        return elementContainer
+    }
+}
+
+extensions.create( 'myExt', MyExt )
+
+myExt {
+    elements {
+        a(MyNamedOne) {
+            zero = 'hello'
+            one = 'world'
+        }
+        b(MyNamedTwo) {
+            zero = 'or not'
+        }
+        c(MyNamedOne) {
+            zero = 'bye'
+            one = 'for now'
+        }
+        d {
+            zero = 'so long'
+        }
+    }
+
+}
+
+task qwe {
+    doLast {
+        myExt.elements.withType( MyNamed ) {
+            println "${it.name}: ${it.zero.get()}"
+        }
+        myExt.elements.withType( MyNamedOne ) {
+            println "[One] ${it.name}: ${it.zero.get()} ${it.one.get()}"
+        }
+        myExt.elements.withType( MyNamedTwo ) {
+            println "[Two] ${it.name} ${it.zero.get()}"
+        }
+    }
+}
