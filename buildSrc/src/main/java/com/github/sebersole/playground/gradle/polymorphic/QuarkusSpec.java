@@ -10,9 +10,12 @@ import org.gradle.util.ConfigureUtil;
 import groovy.lang.Closure;
 
 public class QuarkusSpec {
+    private final Project project;
     private final ExtensiblePolymorphicDomainObjectContainer<ExtensionSpec> extensionSpecContainer;
 
     public QuarkusSpec(Project project) {
+        this.project = project;
+
         final ObjectFactory objectFactory = project.getObjects();
 
         extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec.class );
@@ -24,7 +27,9 @@ public class QuarkusSpec {
                 ExtensionSpec.class,
                 (name) -> {
                     project.getLogger().lifecycle( "Creating (default) `StandardExtensionSpec` via registered factory" );
-                    return objectFactory.newInstance( StandardExtensionSpec.class, name, objectFactory );
+                    return objectFactory.newInstance( StandardExtensionSpec.class, name );
+                    //return new StandardExtensionSpec ( name, objectFactory ) {
+                    //};
                 }
         );
 
@@ -32,7 +37,15 @@ public class QuarkusSpec {
                 StandardExtensionSpec.class,
                 (name) -> {
                     project.getLogger().lifecycle( "Creating `StandardExtensionSpec` via registered factory" );
-                    return objectFactory.newInstance( StandardExtensionSpec.class, name, objectFactory );
+                    return objectFactory.newInstance( StandardExtensionSpec.class, name );
+                }
+        );
+
+        extensionSpecContainer.addRule(
+                "hibernateOrm",
+                name -> {
+                    final ExtensionSpec extensionSpec = extensionSpecContainer.maybeCreate( "hibernateOrm" );
+                    extensionSpec.setRuntimeArtifact( "org.hibernate:hibernate-core:SOMETHING" );
                 }
         );
 
@@ -40,20 +53,22 @@ public class QuarkusSpec {
                 SpecialExtensionSpec.class,
                 name -> {
                     project.getLogger().lifecycle( "Creating `SpecialExtensionSpec` via registered factory" );
-                    return objectFactory.newInstance( SpecialExtensionSpec .class, name, objectFactory );
+                    return objectFactory.newInstance( SpecialExtensionSpec .class, name );
                 }
         );
     }
 
-    void extensionSpecs(Action<PolymorphicDomainObjectContainer<ExtensionSpec>> action) {
+    public void extensionSpecs(Action<PolymorphicDomainObjectContainer<ExtensionSpec>> action) {
+        project.getLogger().lifecycle( "Access to `extensionSpecs` container via Action" );
         action.execute( extensionSpecContainer );
     }
 
-    void extensionSpecs(Closure<PolymorphicDomainObjectContainer<ExtensionSpec>> closure) {
+    public void extensionSpecs(Closure<PolymorphicDomainObjectContainer<ExtensionSpec>> closure) {
+        project.getLogger().lifecycle( "Access to `extensionSpecs` container via Closure" );
         ConfigureUtil.configure( closure, extensionSpecContainer );
     }
 
-    PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecContainer() {
+    public PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecContainer() {
         return extensionSpecContainer;
     }
 }

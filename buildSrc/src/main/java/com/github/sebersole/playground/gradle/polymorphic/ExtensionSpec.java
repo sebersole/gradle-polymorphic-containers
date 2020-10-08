@@ -6,6 +6,10 @@ import org.gradle.api.provider.Property;
 /**
  * @author Steve Ebersole
  */
-interface ExtensionSpec extends Named {
+public interface ExtensionSpec extends Named {
 	Property<String> getRuntimeArtifact();
+
+	default void setRuntimeArtifact(String notation) {
+		getRuntimeArtifact().set( notation );
+	}
 }

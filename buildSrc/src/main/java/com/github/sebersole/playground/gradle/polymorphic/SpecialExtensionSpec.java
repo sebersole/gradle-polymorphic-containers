@@ -33,4 +33,8 @@ public class SpecialExtensionSpec implements ExtensionSpec {
 	public Property<String> getSpecialValue() {
 		return specialValue;
 	}
+
+	public void setSpecialValue(String value) {
+		getSpecialValue().set( value );
+	}
 }
