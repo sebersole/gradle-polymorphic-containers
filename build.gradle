@@ -1,13 +1,10 @@
+import com.github.sebersole.playground.gradle.polymorphic.QuarkusSpec
+import com.github.sebersole.playground.gradle.polymorphic.ExtensionSpec
+import com.github.sebersole.playground.gradle.polymorphic.SpecialExtensionSpec
+import com.github.sebersole.playground.gradle.polymorphic.StandardExtensionSpec
+
 plugins {
     id 'java'
-    id 'groovy'
-    id 'java-gradle-plugin'
-
-    id 'com.gradle.plugin-publish' version '0.12.0'
-
-    // for publishing snapshots
-    id 'maven-publish'
-    id 'org.hibernate.build.maven-repo-auth' version '3.0.4'
 }
 
 group 'com.github.sebersole'
@@ -22,96 +19,23 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-abstract class ExtensionSpec implements Named {
-    private final String name
-    abstract Property<String> getZero()
-   @javax.inject.Inject
-   ExtensionSpec(String name) {
-        this.name = name
-    }
-    @Override
-    String getName() {
-        return name
-    }
-}
-abstract class ExtensionSpecOne extends ExtensionSpec {
-    abstract Property<String> getOne()
-    @javax.inject.Inject
-    ExtensionSpecOne(String name) {
-        super(name)
-    }
-}
-abstract class ExtensionSpecTwo extends ExtensionSpec {
-    @javax.inject.Inject
-    ExtensionSpecTwo(String name) {
-        super(name)
-    }
-}
-
-class QuarkusSpec {
-    private final ExtensiblePolymorphicDomainObjectContainer<ExtensionSpec> extensionSpecContainer
-
-    @javax.inject.Inject
-    QuarkusSpec(ObjectFactory objectFactory) {
-        extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec )
-//        extensionSpecContainer.registerFactory( ExtensionSpec, { objectFactory.newInstance(ExtensionSpec, it) } )
-//        extensionSpecContainer.registerFactory( ExtensionSpecOne, { objectFactory.newInstance(ExtensionSpecOne, it) } )
-//        extensionSpecContainer.registerFactory( ExtensionSpecTwo, { objectFactory.newInstance(ExtensionSpecTwo, it) } )
-        extensionSpecContainer.registerFactory(
-                ExtensionSpec,
-                new NamedDomainObjectFactory() {
-                    @Override
-                    ExtensionSpec create(String name) {
-                        return objectFactory.newInstance(ExtensionSpec, name)
-                    }
-                }
-        )
-        extensionSpecContainer.registerFactory(
-                ExtensionSpecOne,
-                new NamedDomainObjectFactory() {
-                    @Override
-                    ExtensionSpecOne create(String name) {
-                        return objectFactory.newInstance(ExtensionSpecOne, name)
-                    }
-                }
-        )
-        extensionSpecContainer.registerFactory(
-                ExtensionSpecTwo,
-                new NamedDomainObjectFactory() {
-                    @Override
-                    ExtensionSpecTwo create(String name) {
-                        return objectFactory.newInstance(ExtensionSpecTwo, name)
-                    }
-                }
-        )
-    }
-
-    void extensionSpecs(Action<PolymorphicDomainObjectContainer<ExtensionSpec>> action) {
-        action.execute( extensionSpecContainer );
-    }
-
-    PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecs() {
-        return extensionSpecContainer
-    }
-}
-
 extensions.create( 'quarkus', QuarkusSpec )
+//extensions.create( 'quarkus', QuarkusSpec, project.objects )
 
 quarkus {
     extensionSpecs {
-        a(ExtensionSpecOne) {
-            zero = 'hello'
-            one = 'world'
+        a(ExtensionSpec) {
+            runtimeArtifact.set( 'this.test:a:0.1' )
         }
-        b(ExtensionSpecTwo) {
-            zero = 'or not'
+        b(SpecialExtensionSpec) {
+            runtimeArtifact = 'this.test:b:0.1'
+            specialValue = 'special one'
         }
-        c(ExtensionSpecOne) {
-            zero = 'bye'
-            one = 'for now'
+        c(StandardExtensionSpec) {
+            runtimeArtifact = 'this.test:c:0.1'
         }
         d {
-            zero = 'so long'
+            runtimeArtifact = 'this.test:d:0.1'
         }
     }
 
@@ -120,13 +44,13 @@ quarkus {
 task qwe {
     doLast {
         quarkus.extensionSpecs.withType( ExtensionSpec ) {
-            println "${it.name}: ${it.zero.get()}"
+            println "${it.name}: ${it.runtimeArtifact.get()}"
         }
-        quarkus.extensionSpecs.withType( ExtensionSpecOne ) {
-            println "[One] ${it.name}: ${it.zero.get()} ${it.one.get()}"
+        quarkus.extensionSpecs.withType( StandardExtensionSpec ) {
+            println "[Standard] ${it.name}: ${it.runtimeArtifact.get()}"
         }
-        quarkus.extensionSpecs.withType( ExtensionSpecTwo ) {
-            println "[Two] ${it.name} ${it.zero.get()}"
+        quarkus.extensionSpecs.withType( SpecialExtensionSpec ) {
+            println "[Special] ${it.name} ${it.runtimeArtifact.get()} - ${it.specialValue.get()}"
         }
     }
 }
