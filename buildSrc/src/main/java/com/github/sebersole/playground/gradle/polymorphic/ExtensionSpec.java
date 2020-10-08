@@ -6,6 +6,6 @@ import org.gradle.api.provider.Property;
 /**
  * @author Steve Ebersole
  */
-public interface ExtensionSpec extends Named {
+interface ExtensionSpec extends Named {
 	Property<String> getRuntimeArtifact();
 }

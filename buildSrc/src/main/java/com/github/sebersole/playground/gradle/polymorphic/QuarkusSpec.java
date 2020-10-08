@@ -3,25 +3,45 @@ package com.github.sebersole.playground.gradle.polymorphic;
 import org.gradle.api.Action;
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
 import org.gradle.api.PolymorphicDomainObjectContainer;
+import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.util.ConfigureUtil;
+
+import groovy.lang.Closure;
 
 public class QuarkusSpec {
     private final ExtensiblePolymorphicDomainObjectContainer<ExtensionSpec> extensionSpecContainer;
 
-    @javax.inject.Inject
-    public QuarkusSpec(ObjectFactory objectFactory) {
+    public QuarkusSpec(Project project) {
+        final ObjectFactory objectFactory = project.getObjects();
+
         extensionSpecContainer = objectFactory.polymorphicDomainObjectContainer( ExtensionSpec.class );
 
-        extensionSpecContainer.registerBinding( ExtensionSpec.class, StandardExtensionSpec.class);
+        // this does not work - research how this is supposed to work
+        //extensionSpecContainer.registerBinding( ExtensionSpec.class, StandardExtensionSpec.class );
 
         extensionSpecContainer.registerFactory(
-                StandardExtensionSpec.class,
-                (name) -> objectFactory.newInstance( StandardExtensionSpec.class, name )
+                ExtensionSpec.class,
+                (name) -> {
+                    project.getLogger().lifecycle( "Creating (default) `StandardExtensionSpec` via registered factory" );
+                    return objectFactory.newInstance( StandardExtensionSpec.class, name, objectFactory );
+                }
         );
 
         extensionSpecContainer.registerFactory(
-                SpecialExtensionSpec .class,
-                (name) -> objectFactory.newInstance( SpecialExtensionSpec .class, name )
+                StandardExtensionSpec.class,
+                (name) -> {
+                    project.getLogger().lifecycle( "Creating `StandardExtensionSpec` via registered factory" );
+                    return objectFactory.newInstance( StandardExtensionSpec.class, name, objectFactory );
+                }
+        );
+
+        extensionSpecContainer.registerFactory(
+                SpecialExtensionSpec.class,
+                name -> {
+                    project.getLogger().lifecycle( "Creating `SpecialExtensionSpec` via registered factory" );
+                    return objectFactory.newInstance( SpecialExtensionSpec .class, name, objectFactory );
+                }
         );
     }
 
@@ -29,7 +49,11 @@ public class QuarkusSpec {
         action.execute( extensionSpecContainer );
     }
 
-    PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecs() {
+    void extensionSpecs(Closure<PolymorphicDomainObjectContainer<ExtensionSpec>> closure) {
+        ConfigureUtil.configure( closure, extensionSpecContainer );
+    }
+
+    PolymorphicDomainObjectContainer<ExtensionSpec> getExtensionSpecContainer() {
         return extensionSpecContainer;
     }
 }

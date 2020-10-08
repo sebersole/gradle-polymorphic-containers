@@ -1,11 +1,14 @@
-import com.github.sebersole.playground.gradle.polymorphic.QuarkusSpec
+//import com.github.sebersole.playground.gradle.polymorphic.QuarkusSpec
 import com.github.sebersole.playground.gradle.polymorphic.ExtensionSpec
 import com.github.sebersole.playground.gradle.polymorphic.SpecialExtensionSpec
 import com.github.sebersole.playground.gradle.polymorphic.StandardExtensionSpec
 
 plugins {
     id 'java'
+    id 'groovy'
 }
+
+apply plugin: com.github.sebersole.playground.gradle.polymorphic.QuarkusPlugin
 
 group 'com.github.sebersole'
 version '0.1-SNAPSHOT'
@@ -19,38 +22,32 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-extensions.create( 'quarkus', QuarkusSpec )
-//extensions.create( 'quarkus', QuarkusSpec, project.objects )
-
+// this works...
 quarkus {
-    extensionSpecs {
-        a(ExtensionSpec) {
-            runtimeArtifact.set( 'this.test:a:0.1' )
-        }
-        b(SpecialExtensionSpec) {
-            runtimeArtifact = 'this.test:b:0.1'
-            specialValue = 'special one'
-        }
-        c(StandardExtensionSpec) {
-            runtimeArtifact = 'this.test:c:0.1'
-        }
-        d {
-            runtimeArtifact = 'this.test:d:0.1'
-        }
+    extensionSpecContainer.create('a', ExtensionSpec) {
+        runtimeArtifact = 'ours:a:0.1'
     }
-
+    extensionSpecContainer.create('b', SpecialExtensionSpec) {
+        runtimeArtifact = 'ours:b:0.1'
+    }
+    extensionSpecContainer.create('c', StandardExtensionSpec) {
+        runtimeArtifact = 'ours:c:0.1'
+    }
+    extensionSpecContainer.create('d') {
+        runtimeArtifact = 'ours:d:0.1'
+    }
 }
 
 task qwe {
     doLast {
-        quarkus.extensionSpecs.withType( ExtensionSpec ) {
+        quarkus.extensionSpecContainer.withType( ExtensionSpec ) {
             println "${it.name}: ${it.runtimeArtifact.get()}"
         }
-        quarkus.extensionSpecs.withType( StandardExtensionSpec ) {
+        quarkus.extensionSpecContainer.withType( StandardExtensionSpec ) {
             println "[Standard] ${it.name}: ${it.runtimeArtifact.get()}"
         }
-        quarkus.extensionSpecs.withType( SpecialExtensionSpec ) {
-            println "[Special] ${it.name} ${it.runtimeArtifact.get()} - ${it.specialValue.get()}"
+        quarkus.extensionSpecContainer.withType( SpecialExtensionSpec ) {
+            println "[Special] ${it.name} ${it.runtimeArtifact.get()} - ${it.specialValue.getOrElse('<???>')}"
         }
     }
 }
